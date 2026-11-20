@@ -1,0 +1,45 @@
+SETUP E TEARDOWN (Playwright / API da Biblioteca)
+
+O Que é cada um
+---------------
+SETUP    = preparar o que o teste precisa ANTES de testar.
+           Ex.: fazer login e pegar o token.
+
+TEARDOWN = limpar o que o teste criou DEPOIS de testar.
+           Ex.: apagar o livro que eu cadastrei.
+
+Por que limpar? O banco é compartilhado. Se eu não apago o que criei,
+fica "sujeira" e pode atrapalhar outros testes (ex.: ISBN repetido).
+
+
+teste de cadastrar livro:
+------------------------------------------------
+1- SETUP - login como admin para pegar o token
+
+   const login = await request.post('/api/auth/login', {
+     data: { email: 'admin@biblioteca.com', senha: 'Admin@123' },
+   });
+   const { token } = await login.json();
+
+2- TESTE - cadastrar o livro usando o token
+
+   const resposta = await request.post('/api/livros', {
+     headers: { Authorization: `Bearer ${token}` },
+     data: novoLivro,
+   });
+   expect(resposta.status()).toBe(201);
+   const criado = await resposta.json();
+
+   -> Guardo o "criado.id", porque vou precisar dele para apagar.
+
+3- TEARDOWN - apagar o livro no final do teste
+
+   const exclusao = await request.delete(`/api/livros/${criado.id}`, {
+     headers: { Authorization: `Bearer ${token}` },
+   });
+   expect(exclusao.status()).toBe(204);
+
+   -> 204 = apagou com sucesso (não tem corpo na resposta).
+
+
+
